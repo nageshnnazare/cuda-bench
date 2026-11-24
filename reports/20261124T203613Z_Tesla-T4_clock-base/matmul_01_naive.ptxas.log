@@ -1,0 +1,6 @@
+ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function '_Z11sgemm_naiveiiiPKfS0_Pf' for 'sm_75'
+ptxas info    : Function properties for _Z11sgemm_naiveiiiPKfS0_Pf
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 52 registers, used 0 barriers, 392 bytes cmem[0]
+ptxas info    : Compile time = 9.304 ms
