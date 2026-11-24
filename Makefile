@@ -59,4 +59,4 @@ clean:
 	rm -f $(BINS)
 
 profile: $(PROFILE_BINS)
-	./profile.sh $(notdir $(PROFILE_BINS))
+	./scripts/profile.sh $(notdir $(PROFILE_BINS))

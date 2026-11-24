@@ -129,7 +129,7 @@ for bin in "${BINARIES[@]}"; do
     echo "no bin/$name.ptxas.log to copy (run make to build it)" | tee -a "$log"
   fi
   # 4. The same table as markdown, with sectors per request computed for you.
-  python3 ../scripts/ncu_summary.py "$RUN_DIR/$name.csv" > "$RUN_DIR/$name.md"
+  python3 ../scripts/summarize_profile.py "$RUN_DIR/$name.csv" > "$RUN_DIR/$name.md"
   cat "$RUN_DIR/$name.md"
 done
 
