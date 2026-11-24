@@ -11,18 +11,18 @@ DETECTED := $(shell nvidia-smi --query-gpu=compute_cap --format=csv,noheader 2>/
 # sm_75 is the Tesla T4. WMMA needs sm_70 or newer.
 ARCH     ?= $(if $(DETECTED),sm_$(DETECTED),sm_75)
 
+BIN     := bin
+RESULTS := reports/timings.csv
+
 # Every program is one .cu file. The helpers in common/ are included by relative path, so no -I flags are needed.
-COMMON := include/common/helpers.cuh include/common/reduce.cuh
+COMMON := include/common/helpers.cuh
 SRCS   := $(wildcard src/matmul/*.cu)
-BINS   := $(patsubst %.cu,$(BIN)/%,$(subst /,_,$(SRCS)))
+BINS   := $(patsubst src/matmul/%.cu,$(BIN)/matmul_%,$(SRCS))
 
 # -lineinfo lets Nsight Compute map SASS back to source lines (needed for --import-source).
 # -Xptxas=-v prints the registers used by each kernel. -warn-spills warns when registers spill to local memory.
 NVCCFLAGS := -O3 -std=c++17 -arch=$(ARCH) -Iinclude/ -lineinfo -Xptxas=-v,-warn-spills
 LIBS      :=
-
-BIN     := bin
-RESULTS := reports/timings.csv
 
 # The compile step, shared by all the rules below. $< is the .cu file and $@ is the binary.
 # On failure it prints the whole ptxas log. On success it prints only warnings, register counts and spills.
