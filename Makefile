@@ -5,7 +5,7 @@
 #   make run               build, then run every program into a fresh reports/timings.csv
 #   make run matmul        build, then run only matmul programs and append to reports/timings.csv
 #   make ARCH=sm_75        choose the GPU architecture (default: detected with nvidia-smi, else sm_75)
-#   make clean             delete bin/ (keeps reports/)
+#   make clean             delete built executables (keeps ptxas logs and reports/)
 
 NVCC     ?= nvcc
 DETECTED := $(shell nvidia-smi --query-gpu=compute_cap --format=csv,noheader 2>/dev/null | head -n1 | tr -d '.')
@@ -52,5 +52,5 @@ run: $(RUN_BINS)
 	@for b in $(RUN_BINS); do echo "== $$b"; ./$$b --csv $(RESULTS) || exit 1; done
 
 clean:
-	rm -rf $(BIN)
+	rm -f $(BINS)
 
