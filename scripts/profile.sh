@@ -1,14 +1,15 @@
 #!/usr/bin/env bash
 # Profile the programs with Nsight Compute (ncu).
 
-# Each invocation writes one run folder, reports/<UTC time>_<GPU>_clock-<mode>/, so earlier runs are kept.
+# Reports are grouped by module, GPU, and clock mode in reports/<module>_<GPU>_clock-<mode>/.
+# Re-running the same module/GPU/clock combination overwrites its previous reports.
 # The folder is meant to be committed with the code. For each program it contains:
 #   <name>.ncu-rep    full report (--set full, with source): open it in the Nsight Compute GUI
 #   <name>.log        everything ncu printed for that program, both passes, as it ran
 #   <name>.csv        the key metrics, raw from ncu, one row per kernel launch
 #   <name>.md         the same metrics as a markdown table (../scripts/ncu_summary.py)
 #   <name>.ptxas.log  the compiler's register and spill report for the build of this program
-# Once per run it contains:
+# Once per module profile it contains:
 #   environment.txt   the date, the GPU, the driver, the CUDA and ncu versions, and the git commit with any local changes
 #
 # Usage:
@@ -38,10 +39,46 @@ mkdir -p reports
 # NCU_CLOCK=none to match the timings. Counters are the same either way.
 CLOCK="${NCU_CLOCK:-base}"
 
-# One folder per run, named by the time, the GPU and the clock mode, so a second run never overwrites the first.
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 GPU="$(nvidia-smi --query-gpu=name --format=csv,noheader 2>/dev/null | head -n1 | tr -s ' ' '-' | tr -cd 'A-Za-z0-9._-' || true)"
-RUN_DIR="${RUN_DIR:-reports/${STAMP}_${GPU:-no-gpu}_clock-${CLOCK}}"
+
+# Choose the programs: the names given on the command line, or every executable in bin/.
+BINARIES=()
+if [ "$#" -gt 0 ]; then
+  for name in "$@"; do
+    BINARIES+=("bin/$name")
+  done
+else
+  for f in bin/*; do
+    case "$f" in
+      *.ptxas.log) continue ;;   # the compiler logs are not programs
+    esac
+    if [ -x "$f" ] && [ -f "$f" ]; then
+      BINARIES+=("$f")
+    fi
+  done
+fi
+
+if [ "${#BINARIES[@]}" -eq 0 ]; then
+  echo "no programs found in bin/; run make first" >&2
+  exit 1
+fi
+
+MODULES=()
+for bin in "${BINARIES[@]}"; do
+  module="$(basename "$bin")"
+  module="${module%%_*}"
+  if [[ ! " ${MODULES[*]} " =~ " ${module} " ]]; then
+    MODULES+=("$module")
+  fi
+done
+if [ "${#MODULES[@]}" -eq 1 ]; then
+  MODULE="${MODULES[0]}"
+else
+  MODULE="all"
+fi
+
+RUN_DIR="${RUN_DIR:-reports/${MODULE}_${GPU:-no-gpu}_clock-${CLOCK}}"
 mkdir -p "$RUN_DIR"
 
 # The metrics in the compact table. Each one is explained in PROFILING.md, section 4.
@@ -87,28 +124,6 @@ EOF
   echo "== ncu"
   ncu --version 2>&1 || echo "ncu not found"
 } > "$RUN_DIR/environment.txt"
-
-# Choose the programs: the names given on the command line, or every executable in bin/.
-BINARIES=()
-if [ "$#" -gt 0 ]; then
-  for name in "$@"; do
-    BINARIES+=("bin/$name")
-  done
-else
-  for f in bin/*; do
-    case "$f" in
-      *.ptxas.log) continue ;;   # the compiler logs are not programs
-    esac
-    if [ -x "$f" ] && [ -f "$f" ]; then
-      BINARIES+=("$f")
-    fi
-  done
-fi
-
-if [ "${#BINARIES[@]}" -eq 0 ]; then
-  echo "no programs found in bin/; run make first" >&2
-  exit 1
-fi
 
 for bin in "${BINARIES[@]}"; do
   name="$(basename "$bin")"

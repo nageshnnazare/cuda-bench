@@ -2,8 +2,8 @@
 #
 #   make                   build every program into bin/
 #   make matmul            build one dir in src
-#   make run               build, then run every program into a fresh reports/timings.csv
-#   make run matmul        build, then run only matmul programs and append to reports/timings.csv
+#   make run               build, then run every program into a fresh module/GPU-specific CSV
+#   make run matmul        build, then run only matmul programs and append to their CSV
 #   make profile           build, then profile every program
 #   make profile matmul    build, then profile only matmul programs
 #   make ARCH=sm_75        choose the GPU architecture (default: detected with nvidia-smi, else sm_75)
@@ -15,7 +15,6 @@ DETECTED := $(shell nvidia-smi --query-gpu=compute_cap --format=csv,noheader 2>/
 ARCH     ?= $(if $(DETECTED),sm_$(DETECTED),sm_75)
 
 BIN     := bin
-RESULTS := reports/timings.csv
 
 # Every program is one .cu file. The helpers in common/ are included by relative path, so no -I flags are needed.
 COMMON := include/common/helpers.cuh
@@ -24,6 +23,11 @@ BINS   := $(patsubst src/matmul/%.cu,$(BIN)/matmul_%,$(SRCS))
 MATMUL_BINS := $(filter $(BIN)/matmul_%,$(BINS))
 RUN_TARGETS := $(filter-out run,$(MAKECMDGOALS))
 RUN_BINS := $(if $(filter matmul,$(RUN_TARGETS)),$(MATMUL_BINS),$(BINS))
+RUN_MODULES := $(sort $(foreach b,$(RUN_BINS),$(firstword $(subst _, ,$(notdir $(b))))))
+RESULT_MODULE := $(if $(word 2,$(RUN_MODULES)),all,$(firstword $(RUN_MODULES)))
+GPU_NAME := $(shell nvidia-smi --query-gpu=name --format=csv,noheader 2>/dev/null | head -n1 | tr -s ' ' '-' | tr -cd 'A-Za-z0-9._-')
+GPU := $(if $(GPU_NAME),$(GPU_NAME),no-gpu)
+RESULTS := reports/$(if $(RESULT_MODULE),$(RESULT_MODULE),all)_$(GPU)_timings.csv
 PROFILE_TARGETS := $(filter-out profile,$(MAKECMDGOALS))
 PROFILE_BINS := $(if $(filter matmul,$(PROFILE_TARGETS)),$(MATMUL_BINS),$(BINS))
 
