@@ -12,15 +12,17 @@
 #   environment.txt   the date, the GPU, the driver, the CUDA and ncu versions, and the git commit with any local changes
 #
 # Usage:
-#   ./profile.sh                          every program in bin/
-#   ./profile.sh matmul_01_naive          only the named programs (names as in bin/)
-#   NCU_CLOCK=none ./profile.sh           profile at boost clocks (default: base clocks)
-#   RUN_DIR=reports/my-run ./profile.sh   write into a folder you name (an existing folder is overwritten)
+#   ./scripts/profile.sh                          every program in bin/
+#   ./scripts/profile.sh matmul_01_naive          only the named programs (names as in bin/)
+#   NCU_CLOCK=none ./scripts/profile.sh           profile at boost clocks (default: base clocks)
+#   RUN_DIR=reports/my-run ./scripts/profile.sh   write into a folder you name (an existing folder is overwritten)
 #
 # Each program runs with --profile, so ncu sees exactly one launch of the kernel: no self-test and no timing loop.
 # ncu usually needs root or the perf-counter permission: https://developer.nvidia.com/ERR_NVGPUCTRPERM
 set -euo pipefail
-cd "$(dirname "$0")"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+ROOT_DIR="$(dirname "$SCRIPT_DIR")"
+cd "$ROOT_DIR"
 
 if [ "$#" -gt 0 ]; then
   for name in "$@"; do
@@ -67,11 +69,11 @@ EOF
   echo "command:       $0 $*"
   echo "run_dir:       $RUN_DIR"
   echo
-  echo "== git (repo root is the parent of learn/)"
-  if git -C .. rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-    echo "commit: $(git -C .. rev-parse HEAD)"
+  echo "== git"
+  if git -C "$ROOT_DIR" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    echo "commit: $(git -C "$ROOT_DIR" rev-parse HEAD)"
     echo "local changes (git status --short, empty means clean):"
-    git -C .. status --short || true
+    git -C "$ROOT_DIR" status --short || true
   else
     echo "not a git checkout"
   fi
@@ -129,7 +131,7 @@ for bin in "${BINARIES[@]}"; do
     echo "no bin/$name.ptxas.log to copy (run make to build it)" | tee -a "$log"
   fi
   # 4. The same table as markdown, with sectors per request computed for you.
-  python3 ../scripts/summarize_profile.py "$RUN_DIR/$name.csv" > "$RUN_DIR/$name.md"
+  python3 scripts/summarize_profile.py "$RUN_DIR/$name.csv" > "$RUN_DIR/$name.md"
   cat "$RUN_DIR/$name.md"
 done
 
