@@ -4,6 +4,8 @@
 #   make matmul            build one dir in src
 #   make run               build, then run every program into a fresh reports/timings.csv
 #   make run matmul        build, then run only matmul programs and append to reports/timings.csv
+#   make profile           build, then profile every program
+#   make profile matmul    build, then profile only matmul programs
 #   make ARCH=sm_75        choose the GPU architecture (default: detected with nvidia-smi, else sm_75)
 #   make clean             delete built executables (keeps ptxas logs and reports/)
 
@@ -22,6 +24,8 @@ BINS   := $(patsubst src/matmul/%.cu,$(BIN)/matmul_%,$(SRCS))
 MATMUL_BINS := $(filter $(BIN)/matmul_%,$(BINS))
 RUN_TARGETS := $(filter-out run,$(MAKECMDGOALS))
 RUN_BINS := $(if $(filter matmul,$(RUN_TARGETS)),$(MATMUL_BINS),$(BINS))
+PROFILE_TARGETS := $(filter-out profile,$(MAKECMDGOALS))
+PROFILE_BINS := $(if $(filter matmul,$(PROFILE_TARGETS)),$(MATMUL_BINS),$(BINS))
 
 # -lineinfo lets Nsight Compute map SASS back to source lines (needed for --import-source).
 # -Xptxas=-v prints the registers used by each kernel. -warn-spills warns when registers spill to local memory.
@@ -32,7 +36,7 @@ LIBS      :=
 # On failure it prints the whole ptxas log. On success it prints only warnings, register counts and spills.
 build = $(NVCC) $(NVCCFLAGS) $< -o $@ $(LIBS) 2> $@.ptxas.log || { cat $@.ptxas.log; exit 1; }; grep -E "warning|spill|registers" $@.ptxas.log | grep -v " 0 bytes spill" || true
 
-.PHONY: all run clean matmul
+.PHONY: all run clean matmul profile
 
 all: $(BINS)
 
@@ -54,3 +58,5 @@ run: $(RUN_BINS)
 clean:
 	rm -f $(BINS)
 
+profile: $(PROFILE_BINS)
+	./profile.sh $(notdir $(PROFILE_BINS))
