@@ -128,7 +128,7 @@ int main(int argc, char** argv) {
   const int n = 2048;  // square problem: M = N = K = 2048
 
   std::vector<float> hA((size_t)n * n),
-                     hB((size_t)n * n);                   // CPU copies
+                     hB((size_t)n * n);  // CPU copies
   fill_uniform(hA, 3);  // random data (values do not change the speed of a dense matmul)
   fill_uniform(hB, 4);
 
