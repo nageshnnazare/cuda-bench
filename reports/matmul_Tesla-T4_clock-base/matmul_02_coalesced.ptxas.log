@@ -3,4 +3,4 @@ ptxas info    : Compiling entry function '_Z15sgemm_coalescediiiPKfS0_Pf' for 's
 ptxas info    : Function properties for _Z15sgemm_coalescediiiPKfS0_Pf
     0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
 ptxas info    : Used 52 registers, used 0 barriers, 392 bytes cmem[0]
-ptxas info    : Compile time = 13.977 ms
+ptxas info    : Compile time = 9.158 ms

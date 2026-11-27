@@ -1,11 +1,11 @@
 ### full report: ncu --set full --import-source yes
-==PROF== Connected to process 1561 (/content/cuda-bench/bin/matmul_02_coalesced)
+==PROF== Connected to process 1267 (/content/cuda-bench/bin/matmul_02_coalesced)
 ==PROF== Profiling "sgemm_coalesced" - 0: 0%
 ==WARNING== Launching the workload is taking more time than expected. If this continues to hang, terminate the profile and re-try by profiling the range of all related launches using '--replay-mode range'. See https://docs.nvidia.com/nsight-compute/ProfilingGuide/index.html#replay for more details.
 ....50%....100% - 33 passes
 Device: Tesla T4 (sm_75, 40 SMs, 15.6 GB)
 
-v1 coalesced              17333.061 ms    0.0010 TFLOP/s
-==PROF== Disconnected from process 1561
+v1 coalesced              17067.854 ms    0.0010 TFLOP/s
+==PROF== Disconnected from process 1267
 ==PROF== Report: /content/cuda-bench/reports/matmul_Tesla-T4_clock-base/matmul_02_coalesced.ncu-rep
 ### metric table: ncu --metrics (the raw CSV is written to matmul_02_coalesced.csv)
